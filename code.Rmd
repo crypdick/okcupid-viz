@@ -50,6 +50,14 @@ nrow(full_data)
 
 ```
 
+Save current state for easy continuation
+(credit: Kev)
+```{r}
+#setwd()
+#saveRDS(full_data, file="full_speed_dating.rds")
+full_data <- readRDS("full_speed_dating.rds")
+```
+
 
 # Predicting rate of people liking you with constant fields
 (credit: Beau and Richard)
