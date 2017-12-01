@@ -11,6 +11,7 @@ Group members: Beau, Richard, Saad, Kevin
 
 
 # Importing the data
+(credit: Beau and Richard)
 
 Speed Dating dataset: https://www.kaggle.com/annavictoria/speed-dating-experiment
 
@@ -41,9 +42,16 @@ data1$mn_sat <- as.numeric(data1$mn_sat)
 ```
 
 
-# Looking at constant fields
+# Predicting rate of people liking you with constant fields
+(credit: Beau and Richard)
 
-For
+
+The variable 'dec_o' encodes whether the other person in the date decided they would like a second date with you (1 for yes, 0 for no). We decided to use this as the response variable instead of 'match' because 'match' means that both people mutually liked each other. In particular, for each participant, we took the mean of 'dec_o' as a proxy for desireable-ness.
+
+
+
+We defined a new table 'rest_of' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
+
 ```{r}
 
 first <- aggregate(dec_o ~ iid,data1, mean)
