@@ -9,6 +9,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Group members: Beau, Richard, Saad, Kevin
 
+```{r}
+library(data.table)
+```
+
 
 # Importing the data
 (credit: Beau and Richard)
@@ -22,7 +26,10 @@ We imported the data, and then turned the appropriate columns into factors. Miss
 For now, we are filtering out rows which do not have complete data (some participants did not include their hometown or undergraduate school, which were used as proxies to quantify wealth and education level). We are probably going to add these partially-full rows back into our analysis as we drop features from our model.
 
 ```{r}
-data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"))
+project.dir <- getwd()
+setwd(project.dir)
+file_names <- list.files(file.path(project.dir), pattern="*.csv", full.names=TRUE) 
+data1 <- fread(file.path(file_names))
 
 
 data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
