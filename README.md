@@ -1,11 +1,7 @@
-# okcupid-viz
+# speed-dating-viz
 
-Exploring the open and anonymized OkCupid dataset using R.
+Exploring speed-dating data using R.
 
-Dataset from https://github.com/rudeboybert/JSE_OkCupid
+## Dataset
 
-
-Questions:
-
-- can we fit a linear model that predict self-reported drug usage?
-- are there correlations with variables, especially "risky" behaviors?
+https://www.kaggle.com/annavictoria/speed-dating-experiment
