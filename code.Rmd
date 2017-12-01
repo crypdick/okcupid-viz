@@ -1,0 +1,21 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"))
+
+
+data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], as.factor)
+
+```
+
+```{r}
+#aggregate(data$ ~ Species, iris, sum)
+```
+
