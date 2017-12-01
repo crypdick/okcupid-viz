@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "How to Manufacture Your Personality to Gain Friends and Second Dates: A Data-Driven Field Guide for Pathetic People by Pathetic People"
 output: html_document
 ---
 
@@ -7,8 +7,33 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Group members: Beau, Richard, Saad, Kevin
+
 ```{r}
+<<<<<<< HEAD
 data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"), na.strings = "")
+=======
+library(data.table)
+```
+
+
+# Importing the data
+(credit: Beau and Richard)
+
+Speed Dating dataset: https://www.kaggle.com/annavictoria/speed-dating-experiment
+
+Each row of the data represents one date. The primary key is one of the participants in the date, so for each date there are two rows in the dataset.
+
+We imported the data, and then turned the appropriate columns into factors. Missing data were just blank strings, which we encoded as NAs.
+
+For now, we are filtering out rows which do not have complete data (some participants did not include their hometown or undergraduate school, which were used as proxies to quantify wealth and education level). We are probably going to add these partially-full rows back into our analysis as we drop features from our model.
+
+```{r}
+project.dir <- getwd()
+setwd(project.dir)
+file_names <- list.files(file.path(project.dir), pattern="*.csv", full.names=TRUE) 
+data1 <- fread(file.path(file_names))
+>>>>>>> 2dc267ca1c2e5e40f9786e9b418f7796d9a84e28
 
 
 data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
@@ -25,6 +50,17 @@ nrow(data1)
 #nrow(data1[complete.cases(data1[ , c("tuition", "income")]),])
 
 ```
+
+
+# Predicting rate of people liking you with constant fields
+(credit: Beau and Richard)
+
+
+The variable 'dec_o' encodes whether the other person in the date decided they would like a second date with you (1 for yes, 0 for no). We decided to use this as the response variable instead of 'match' because 'match' means that both people mutually liked each other. In particular, for each participant, we took the mean of 'dec_o' as a proxy for desireable-ness.
+
+
+
+We defined a new table 'rest_of' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
 
 ```{r}
 
