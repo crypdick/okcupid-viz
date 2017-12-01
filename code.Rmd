@@ -16,6 +16,12 @@ data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met
 ```
 
 ```{r}
-#aggregate(data$ ~ Species, iris, sum)
+first <- aggregate(dec_o ~ iid,data1, mean)
+
+rest_of <- data1[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
+
+rest_of <- rest_of[!duplicated(rest_of),]
+
+
 ```
 
