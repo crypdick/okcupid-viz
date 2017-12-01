@@ -1,11 +1,24 @@
 ---
-title: "Untitled"
+title: "How to Manufacture Your Personality to Gain Friends and Second Dates: A Data-Driven Field Guide for Pathetic People by Pathetic People"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+Group members: Beau, Richard, Saad, Kevin
+
+
+# Importing the data
+
+Speed Dating dataset: https://www.kaggle.com/annavictoria/speed-dating-experiment
+
+Each row of the data represents one date. The primary key is one of the participants in the date, so for each date there are two rows in the dataset.
+
+We imported the data, and then turned the appropriate columns into factors. Missing data were just blank strings, which we encoded as NAs.
+
+For now, we are filtering out rows which do not have complete data (some participants did not include their hometown or undergraduate school, which were used as proxies to quantify wealth and education level). We are probably going to add these partially-full rows back into our analysis as we drop features from our model.
 
 ```{r}
 data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"))
@@ -27,6 +40,10 @@ data1$tuition <- as.numeric(data1$tuition)
 data1$mn_sat <- as.numeric(data1$mn_sat)
 ```
 
+
+# Looking at constant fields
+
+For
 ```{r}
 
 first <- aggregate(dec_o ~ iid,data1, mean)
