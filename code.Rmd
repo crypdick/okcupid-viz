@@ -8,23 +8,22 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"))
+data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"), na.strings = "")
 
 
 data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
 
 #income, tuition, and mn_sat have NA values so they aren't numeric
 
-nrow(data1[complete.cases(data1[ , c(6,7,9)]),])
+nrow(data1[complete.cases(data1[ , c("income","tuition","mn_sat")]),])
 nrow(data1)
 
 #we could look at subset? is there a reason that people left off this information?
 
-data1 <- data1[complete.cases(data1[ , c(6,7,9)]),]
+#data1 <- nrow(data1[complete.cases(data1[ , c("income")]),])
+#nrow(data1[complete.cases(data1[ , c("mn_sat", "income")]),])
+#nrow(data1[complete.cases(data1[ , c("tuition", "income")]),])
 
-data1$income <- as.numeric(data1$income)
-data1$tuition <- as.numeric(data1$tuition)
-data1$mn_sat <- as.numeric(data1$mn_sat)
 ```
 
 ```{r}
@@ -42,10 +41,34 @@ str(total)
 
 
 ```{r}
-#test <- total[, -c(6,7,9) ]
-fit <- lm(dec_o ~ ., data = total)
+total <- total[, -c(6,7,9) ]
+fit <- lm(dec_o ~ ., data = na.omit(total))
 summary(fit)
 
 
 ```
+
+```{r}
+# since we have a bunch of predictor variables I'm going to run a stepwaise AIC
+library(MASS)
+step <- stepAIC(fit, direction="both")
+step$anova # display results
+```
+
+```{r}
+fit2 <- lm(dec_o ~ gender + age + field_cd + go_out + sports + tvsports + 
+    exercise + art + clubbing + tv + theater, data = na.omit(total))
+summary(fit2)
+```
+
+
+```{r}
+pairs(total[,c("dec_o", "gender", "age", "field_cd", "go_out", "sports", "tvsports", "exercise", "art", "clubbing", "tv", "theater")])
+
+#that didn't do shite
+par(mfrow = c(2,2))
+plot(fit2)
+
+```
+
 
