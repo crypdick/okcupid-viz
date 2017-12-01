@@ -29,21 +29,21 @@ For now, we are filtering out rows which do not have complete data (some partici
 project.dir <- getwd()
 setwd(project.dir)
 file_names <- list.files(file.path(project.dir), pattern="*.csv", full.names=TRUE) 
-data1 <- fread(file.path(file_names))
+full_data <- fread(file.path(file_names))
 
 
-data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
+full_data[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")] <- lapply(full_data[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
 
 #income, tuition, and mn_sat have NA values so they aren't numeric
 
-nrow(data1[complete.cases(data1[ , c("income","tuition","mn_sat")]),])
-nrow(data1)
+nrow(full_data[complete.cases(full_data[ , c("income","tuition","mn_sat")]),])
+nrow(full_data)
 
 #we could look at subset? is there a reason that people left off this information?
 
-#data1 <- nrow(data1[complete.cases(data1[ , c("income")]),])
-#nrow(data1[complete.cases(data1[ , c("mn_sat", "income")]),])
-#nrow(data1[complete.cases(data1[ , c("tuition", "income")]),])
+#full_data <- nrow(full_data[complete.cases(full_data[ , c("income")]),])
+#nrow(full_data[complete.cases(full_data[ , c("mn_sat", "income")]),])
+#nrow(full_data[complete.cases(full_data[ , c("tuition", "income")]),])
 
 ```
 
@@ -56,26 +56,25 @@ The variable 'dec_o' encodes whether the other person in the date decided they w
 
 
 
-We defined a new table 'rest_of' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
+We defined a new table 'const_attribs' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
 
 ```{r}
+#  rate that people decide they like you after the speed date
+desirableness <- aggregate(dec_o ~ iid,full_data, mean)
 
-first <- aggregate(dec_o ~ iid,data1, mean)
+const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
 
-rest_of <- data1[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
+const_attribs <- const_attribs[!duplicated(const_attribs),]
 
-rest_of <- rest_of[!duplicated(rest_of),]
-
-total <- merge(first,rest_of,by="iid")
-str(total)
-
+# binding back together
+const_attribs <- merge(desirableness, const_attribs,by="iid")
 ```
 
-
+We removed a few columns that had pesky numerical values. We will come back and probably add these back in after fixing that.
 ```{r}
-total <- total[, -c(6,7,9) ]
-fit <- lm(dec_o ~ ., data = na.omit(total))
-summary(fit)
+const_attribs <- const_attribs[, -c(6,7,9) ]
+full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))
+summary(full_const_fit)
 
 
 ```
@@ -83,23 +82,24 @@ summary(fit)
 ```{r}
 # since we have a bunch of predictor variables I'm going to run a stepwaise AIC
 library(MASS)
-step <- stepAIC(fit, direction="both")
+step <- stepAIC(full_const_fit, direction="both")
 step$anova # display results
 ```
 
+Reducing our model based on our anova results
 ```{r}
-fit2 <- lm(dec_o ~ gender + age + field_cd + go_out + sports + tvsports + 
-    exercise + art + clubbing + tv + theater, data = na.omit(total))
-summary(fit2)
+reduced_const_fit <- lm(dec_o ~ gender + age + field_cd + go_out + sports + tvsports + 
+    exercise + art + clubbing + tv + theater, data = na.omit(const_attribs))
+summary(reduced_const_fit)
 ```
 
 
 ```{r}
-pairs(total[,c("dec_o", "gender", "age", "field_cd", "go_out", "sports", "tvsports", "exercise", "art", "clubbing", "tv", "theater")])
+pairs(const_attribs[,c("dec_o", "gender", "age", "field_cd", "go_out", "sports", "tvsports", "exercise", "art", "clubbing", "tv", "theater")])
 
 #that didn't do shite
 par(mfrow = c(2,2))
-plot(fit2)
+plot(reduced_const_fit)
 
 ```
 
