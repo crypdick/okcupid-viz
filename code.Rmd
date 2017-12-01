@@ -26,6 +26,9 @@ We imported the data, and then turned the appropriate columns into factors. Miss
 For now, we are filtering out rows which do not have complete data (some participants did not include their hometown or undergraduate school, which were used as proxies to quantify wealth and education level). We are probably going to add these partially-full rows back into our analysis as we drop features from our model.
 
 ```{r}
+# This works if you do the following:
+# stick the csv file in the same directory as this Rmd
+# in RStudio, go to Session -> Set Work Directory -> To Source File location
 project.dir <- getwd()
 setwd(project.dir)
 file_names <- list.files(file.path(project.dir), pattern="*.csv", full.names=TRUE) 
