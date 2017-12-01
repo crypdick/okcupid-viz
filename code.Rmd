@@ -11,16 +11,40 @@ knitr::opts_chunk$set(echo = TRUE)
 data1 <- fread(file.path("/Users/beaubritain/Downloads/Speed_Dating_Data.csv"))
 
 
-data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], as.factor)
+data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")]<-lapply(data1[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
 
+#income, tuition, and mn_sat have NA values so they aren't numeric
+
+nrow(data1[complete.cases(data1[ , c(6,7,9)]),])
+nrow(data1)
+
+#we could look at subset? is there a reason that people left off this information?
+
+data1 <- data1[complete.cases(data1[ , c(6,7,9)]),]
+
+data1$income <- as.numeric(data1$income)
+data1$tuition <- as.numeric(data1$tuition)
+data1$mn_sat <- as.numeric(data1$mn_sat)
 ```
 
 ```{r}
+
 first <- aggregate(dec_o ~ iid,data1, mean)
 
 rest_of <- data1[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
 
 rest_of <- rest_of[!duplicated(rest_of),]
+
+total <- merge(first,rest_of,by="iid")
+str(total)
+
+```
+
+
+```{r}
+#test <- total[, -c(6,7,9) ]
+fit <- lm(dec_o ~ ., data = total)
+summary(fit)
 
 
 ```
