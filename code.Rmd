@@ -69,19 +69,15 @@ The variable 'dec_o' encodes whether the other person in the date decided they w
 
 We defined a new table 'const_attribs' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
 
-attr5_1 
-Attractive
-sinc5_1
-Sincere
-int5_1
-Intelligent
-fun5_1
-Fun
-amb5_1
-Ambitious
+TODO: repeat with likability as response var
 ```{r}
-#  rate that people decide they like you after the speed date
+#  rate that people decide they wanted to date you after the speed date
+# aggregate certain variables for each individual (avg's of attracitness, intelligence score ... etc. that others gave after meeting)
+
 desirableness <- aggregate(dec_o ~ iid,full_data, mean)
+
+# avg likeability score given to you by
+likeability <- aggregate(like_o ~ iid,full_data, mean)
 
 #additional explanitory variables
 attractive <- aggregate(attr_o ~ iid,full_data, mean)
@@ -90,19 +86,25 @@ intelligent <- aggregate( intel_o ~ iid,full_data, mean)
 fun <- aggregate( fun_o ~ iid,full_data, mean)
 ambitious <- aggregate( fun_o ~ iid,full_data, mean)
 
+# create subset with the fields that remain constant for an individual (regardless of the meeting)
 const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
 
+# remove duplicates so there is only one obs per person
 const_attribs <- const_attribs[!duplicated(const_attribs),]
 
-# binding back together
+# binding back together 
 const_attribs <- merge(desirableness, const_attribs,by="iid")
 
+# merges list of dataframes into a single df
 const_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent,fun,ambitious, const_attribs, desirableness  ))
 ```
 
 We removed a few columns that had pesky numerical values. We will come back and probably add these back in after fixing that.
 ```{r}
+# remove fields that consist of mostly NA's
+# these are tuition, SAT, and predicted income
 const_attribs <- const_attribs[, -c(10,11,13) ]
+# fit a full model
 full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))
 summary(full_const_fit)
 
@@ -110,7 +112,7 @@ summary(full_const_fit)
 ```
 
 ```{r}
-# since we have a bunch of predictor variables I'm going to run a stepwaise AIC
+# since we have a bunch of predictor variables I'm going to run a stepwaise AIC to see if we can find a reduced model
 library(MASS)
 step <- stepAIC(full_const_fit, direction="both")
 step$anova # display results
@@ -118,27 +120,41 @@ step$anova # display results
 
 Reducing our model based on our anova results
 ```{r}
-reduced_const_fit <- lm(dec_o ~ gender + age + field_cd + go_out + sports + tvsports + 
-    exercise + art + clubbing + tv + theater, data = na.omit(const_attribs))
+
+
+#the stepAIC returned this model as these as our optimal predictors
+# dec_o, attr_o, fun_o here is the mean of dec_o, attr_o, fun_o reported by partners
+reduced_const_fit <- lm(dec_o ~  attr_o  + gender + age + career_c + tvsports + 
+    art + yoga + fun_o, data = na.omit(const_attribs))
+
 summary(reduced_const_fit)
 
-#with peoples scores
-reduced_const_fit <- lm(dec_o ~ fun_o + attr_o + gender + age + career_c + tvsports + 
-    art + yoga, data = na.omit(const_attribs))
+# look at maybe removing career_c since it didn't improve our R^2 by much. F test shows it helps, so we keep it in model
+anova(reduced_const_fit,lm(dec_o ~ fun_o + attr_o + gender + age + tvsports + 
+    art + yoga, data = na.omit(const_attribs)) )
 
-summary(reduced_const_fit)
+
+
+
+
 ```
 
 
 ```{r}
-pairs(const_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age","career_c", "tvsports","art","yoga")])
+# check if there are any apparent associations between variables in our model
+pairs(const_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age","career_c", "tvsports","art","yoga")]) 
+# it appears that fun_o and attractiveness_o have a linear relationship with our response AND (maybe) each other
 
-#that didn't do shite
 par(mfrow = c(2,2))
 plot(reduced_const_fit)
+# QQ plot indicates normally distributed errors, and possibly-maybe some heteroskedasticity in our variance.
+
+
+#next step is to maybe introduce interaction terms?
 
 ```
 
+The Q-Q plot tells us that we have normally distributed errors, and the Residual vs Fitted plot tells us that we don't have heterskedasticity in our variance. 
 
 # Predicting desireable-ness from discrepancies in personality attribute grading
 
@@ -169,6 +185,8 @@ fun5_1
 Fun
 amb5_1
 Ambitious
+
+NOTE: MOST OF THESE ARE BLANK^^^
 
 These questions were repeated in a follow-up survey, but we decided to just look at the self-ratings from the day of the event.
 
