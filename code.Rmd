@@ -107,3 +107,34 @@ plot(reduced_const_fit)
 ```
 
 
+# Predicting desireable-ness from discrepancies in personality attribute grading
+
+We are interested in how discrepancies between how 
+
+How do you think you measure up?
+Please rate your opinion of your own attributes, on a scale of 1-10 (be honest!):
+attr3_1 
+Attractive
+sinc3_1
+Sincere
+int3_1
+Intelligent
+fun3_1
+Fun
+amb3_1
+Ambitious
+
+And finally, how do you think others perceive you? 
+Please rate yourself how you think others would rate you on each of the following attributes, on a scale of 1-10 (1=awful, 10=great) 
+attr5_1 
+Attractive
+sinc5_1
+Sincere
+int5_1
+Intelligent
+fun5_1
+Fun
+amb5_1
+Ambitious
+
+These questions were repeated in a follow-up survey, but we decided to just look at the self-ratings from the day of the event.
