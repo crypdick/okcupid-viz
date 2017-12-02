@@ -50,7 +50,7 @@ nrow(full_data)
 
 ```
 
-Save current state for easy continuation
+Save/Load current state for easy continuation
 (credit: Kev)
 ```{r}
 #setwd()
@@ -84,7 +84,7 @@ attractive <- aggregate(attr_o ~ iid,full_data, mean)
 sincere <- aggregate(sinc_o ~ iid,full_data, mean)
 intelligent <- aggregate( intel_o ~ iid,full_data, mean)
 fun <- aggregate( fun_o ~ iid,full_data, mean)
-ambitious <- aggregate( fun_o ~ iid,full_data, mean)
+ambitious <- aggregate( amb_o ~ iid,full_data, mean) #this was assigned incorrectly.. do any of the analyses change in model prediction section?
 
 # create subset with the fields that remain constant for an individual (regardless of the meeting)
 const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
@@ -107,8 +107,6 @@ const_attribs <- const_attribs[, -c(10,11,13) ]
 # fit a full model
 full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))
 summary(full_const_fit)
-
-
 ```
 
 ```{r}
@@ -120,8 +118,6 @@ step$anova # display results
 
 Reducing our model based on our anova results
 ```{r}
-
-
 #the stepAIC returned this model as these as our optimal predictors
 # dec_o, attr_o, fun_o here is the mean of dec_o, attr_o, fun_o reported by partners
 reduced_const_fit <- lm(dec_o ~  attr_o  + gender + age + career_c + tvsports + 
@@ -132,11 +128,6 @@ summary(reduced_const_fit)
 # look at maybe removing career_c since it didn't improve our R^2 by much. F test shows it helps, so we keep it in model
 anova(reduced_const_fit,lm(dec_o ~ fun_o + attr_o + gender + age + tvsports + 
     art + yoga, data = na.omit(const_attribs)) )
-
-
-
-
-
 ```
 
 
@@ -151,62 +142,13 @@ plot(reduced_const_fit)
 
 
 #next step is to maybe introduce interaction terms?
-
 ```
 
 The Q-Q plot tells us that we have normally distributed errors, and the Residual vs Fitted plot tells us that we don't have heterskedasticity in our variance. 
 
-# Predicting desireable-ness from discrepancies in personality attribute grading
-
-We are interested in how discrepancies between how 
-
-How do you think you measure up?
-Please rate your opinion of your own attributes, on a scale of 1-10 (be honest!):
-attr3_1 
-Attractive
-sinc3_1
-Sincere
-int3_1
-Intelligent
-fun3_1
-Fun
-amb3_1
-Ambitious
-
-And finally, how do you think others perceive you? 
-Please rate yourself how you think others would rate you on each of the following attributes, on a scale of 1-10 (1=awful, 10=great) 
-attr5_1 
-Attractive
-sinc5_1
-Sincere
-int5_1
-Intelligent
-fun5_1
-Fun
-amb5_1
-Ambitious
-
-NOTE: MOST OF THESE ARE BLANK^^^
-
-These questions were repeated in a follow-up survey, but we decided to just look at the self-ratings from the day of the event.
-
-
-
-################################
-^
-|
-|
-our code
-
-DEMILITARIZED ZONE
-
-kevin's code
-|
-|
-v
-###########################
-
-Based on the model identified above, I want to help you get a date. 
+# How can we get dates?
+(credit: Kev)
+Based on the model identified above, we want to help you get a date. 
 What attributes predict fun or attractiveness?
 Are we any good at knowing how fun/attractive we are?
 
@@ -217,8 +159,6 @@ There is strong colinearity among all of the perceived attributes (the more fun 
 ```{r}
 fun_const_fit <- lm(fun_o ~ . -attr_o -sinc_o -intel_o -dec_o, data = na.omit(const_attribs))
 summary(fun_const_fit)
-
-
 ```
 
 ```{r}
@@ -269,7 +209,6 @@ pairs(const_attribs[,c("fun_o", "gender", "go_out", "exercise", "clubbing", "tv"
 #that didn't do shite
 par(mfrow = c(2,2))
 plot(fun_reduced_const_fit_2)
-
 ```
 
 Although these appear statistically significant, the Adj. R. Square for this model is very low and there is not much linear relationship from the predicted values
