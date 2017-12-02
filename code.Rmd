@@ -69,9 +69,26 @@ The variable 'dec_o' encodes whether the other person in the date decided they w
 
 We defined a new table 'const_attribs' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
 
+attr5_1 
+Attractive
+sinc5_1
+Sincere
+int5_1
+Intelligent
+fun5_1
+Fun
+amb5_1
+Ambitious
 ```{r}
 #  rate that people decide they like you after the speed date
 desirableness <- aggregate(dec_o ~ iid,full_data, mean)
+
+#additional explanitory variables
+attractive <- aggregate(attr_o ~ iid,full_data, mean)
+sincere <- aggregate(sinc_o ~ iid,full_data, mean)
+intelligent <- aggregate( intel_o ~ iid,full_data, mean)
+fun <- aggregate( fun_o ~ iid,full_data, mean)
+ambitious <- aggregate( fun_o ~ iid,full_data, mean)
 
 const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
 
@@ -79,11 +96,13 @@ const_attribs <- const_attribs[!duplicated(const_attribs),]
 
 # binding back together
 const_attribs <- merge(desirableness, const_attribs,by="iid")
+
+const_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent,fun,ambitious, const_attribs, desirableness  ))
 ```
 
 We removed a few columns that had pesky numerical values. We will come back and probably add these back in after fixing that.
 ```{r}
-const_attribs <- const_attribs[, -c(6,7,9) ]
+const_attribs <- const_attribs[, -c(10,11,13) ]
 full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))
 summary(full_const_fit)
 
@@ -102,11 +121,17 @@ Reducing our model based on our anova results
 reduced_const_fit <- lm(dec_o ~ gender + age + field_cd + go_out + sports + tvsports + 
     exercise + art + clubbing + tv + theater, data = na.omit(const_attribs))
 summary(reduced_const_fit)
+
+#with peoples scores
+reduced_const_fit <- lm(dec_o ~ fun_o + attr_o + gender + age + career_c + tvsports + 
+    art + yoga, data = na.omit(const_attribs))
+
+summary(reduced_const_fit)
 ```
 
 
 ```{r}
-pairs(const_attribs[,c("dec_o", "gender", "age", "field_cd", "go_out", "sports", "tvsports", "exercise", "art", "clubbing", "tv", "theater")])
+pairs(const_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age","career_c", "tvsports","art","yoga")])
 
 #that didn't do shite
 par(mfrow = c(2,2))
@@ -146,3 +171,5 @@ amb5_1
 Ambitious
 
 These questions were repeated in a follow-up survey, but we decided to just look at the self-ratings from the day of the event.
+
+
