@@ -277,10 +277,10 @@ abline(attr_lm)
 
 library(ggplot2)
 personality_attribs$attr3_1 <- as.factor(personality_attribs$attr3_1)
-p <- ggplot(personality_attribs, aes(x=attr3_1, y=attr_o, fill=attr3_1)) + 
+p <- ggplot(na.omit(personality_attribs), aes(x=attr3_1, y=attr_o, fill=attr3_1)) + 
   geom_violin(trim=FALSE)
 # plot with median and quartile
-p  + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Attractiveness", x="Self-Reported", y="Partner Rating") + theme_classic()
+p  + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Attractiveness", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
 # is it possible to add the lm to this plot?
 ```
 
@@ -313,14 +313,76 @@ personality_attribs$fun3_1 <- as.factor(personality_attribs$fun3_1)
 personality_attribs$intel3_1 <- as.factor(personality_attribs$intel3_1)
 personality_attribs$amb3_1 <- as.factor(personality_attribs$amb3_1)
 
-ggplot(personality_attribs, aes(x=sinc3_1, y=sinc_o, fill=sinc3_1)) + 
-  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Sincerity", x="Self-Reported", y="Partner Rating") + theme_classic()
-ggplot(personality_attribs, aes(x=fun3_1, y=sinc_o, fill=fun3_1)) + 
-  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Fun", x="Self-Reported", y="Partner Rating") + theme_classic()
-ggplot(personality_attribs, aes(x=intel3_1, y=sinc_o, fill=intel3_1)) + 
-  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Intelligence", x="Self-Reported", y="Partner Rating") + theme_classic()
-ggplot(personality_attribs, aes(x=amb3_1, y=sinc_o, fill=amb3_1)) + 
-  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Ambition", x="Self-Reported", y="Partner Rating") + theme_classic()
+ggplot(na.omit(personality_attribs), aes(x=sinc3_1, y=sinc_o, fill=sinc3_1)) + 
+  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Sincerity", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+ggplot(na.omit(personality_attribs), aes(x=fun3_1, y=sinc_o, fill=fun3_1)) + 
+  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Fun", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+ggplot(na.omit(personality_attribs), aes(x=intel3_1, y=sinc_o, fill=intel3_1)) + 
+  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Intelligence", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+ggplot(na.omit(personality_attribs), aes(x=amb3_1, y=sinc_o, fill=amb3_1)) + 
+  geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Ambition", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+```
+
+```{r}
+sincerity <- full_data[,c("sinc_o", "sinc3_1")]
+sincerity <- sincerity %>% count(sinc3_1, sinc_o)
+# round very few decimal ratings to integers
+sincerity$sinc_o <- as.integer(sincerity$sinc_o)
+sincerity$sinc3_1 <- as.factor(sincerity$sinc3_1)
+sincerity$sinc_o <- as.factor(sincerity$sinc_o)
+
+fun <- full_data[,c("fun_o", "fun3_1")]
+fun <- fun %>% count(fun3_1, fun_o)
+fun$fun3_1 <- as.factor(fun$fun3_1)
+fun$fun_o <- as.factor(as.integer(fun$fun_o))
+
+ambition <- full_data[,c("amb_o", "amb3_1")]
+ambition <- ambition %>% count(amb3_1, amb_o)
+ambition$amb3_1 <- as.factor(ambition$amb3_1)
+ambition$amb_o <- as.factor(as.integer(ambition$amb_o))
+
+intelligence <- full_data[,c("intel_o", "intel3_1")]
+intelligence <- intelligence %>% count(intel3_1, intel_o)
+intelligence$intel3_1 <- as.factor(intelligence$intel3_1)
+intelligence$intel_o <- as.factor(as.integer(intelligence$intel_o))
+
+hotness <- full_data[,c("attr_o", "attr3_1")]
+hotness <- hotness %>% count(attr3_1, attr_o)
+hotness$attr3_1 <- as.factor(hotness$attr3_1)
+hotness$attr_o <- as.factor(as.integer(hotness$attr_o))
+
+ggplot(data = na.omit(hotness), aes(x=attr3_1, y=n, fill=attr_o)) +
+geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(intelligence), aes(x=intel3_1, y=n, fill=intel_o)) +
+geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(ambition), aes(x=amb3_1, y=n, fill=amb_o)) +
+geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(fun), aes(x=fun3_1, y=n, fill=fun_o)) +
+geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(sincerity), aes(x=sinc3_1, y=n, fill=sinc_o)) +
+geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+```
+
+```{r}
+# show with frequency
+ggplot(data = na.omit(hotness), aes(x=attr3_1, y=n, fill=attr_o)) +
+geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(intelligence), aes(x=intel3_1, y=n, fill=intel_o)) +
+geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(ambition), aes(x=amb3_1, y=n, fill=amb_o)) +
+geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(fun), aes(x=fun3_1, y=n, fill=fun_o)) +
+geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+
+ggplot(data = na.omit(sincerity), aes(x=sinc3_1, y=n, fill=sinc_o)) +
+geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
 ```
 
 Self-reported trait ratings do not correlate with average partner ratings.
