@@ -108,6 +108,9 @@ const_attribs <- const_attribs[, -which(names(const_attribs) %in% c("tuition", "
 full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))
 summary(full_const_fit)
 ```
+```{r}
+plot(full_const_fit)
+```
 
 ```{r}
 # since we have a bunch of predictor variables I'm going to run a stepwaise AIC to see if we can find a reduced model
@@ -116,7 +119,7 @@ step <- stepAIC(full_const_fit, direction="both")
 step$anova # display results
 ```
 
-Reducing our model based on our anova results
+Reducing our model based on our stepAIC
 ```{r}
 #the stepAIC returned this model as these as our optimal predictors
 # dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
@@ -125,7 +128,9 @@ reduced_const_fit <- lm(dec_o ~ attr_o + fun_o + gender + age + field_cd + caree
     tvsports + museums + yoga, data = na.omit(const_attribs))
 
 summary(reduced_const_fit)
+```
 
+```{r}
 # look at maybe removing career_c and field_c since it didn't improve our R^2 by much. F test shows it helps, so we keep it in model
 anova(reduced_const_fit,lm(dec_o ~ attr_o + fun_o + gender + age + 
     tvsports + museums + yoga, data = na.omit(const_attribs)) )
