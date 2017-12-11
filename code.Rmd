@@ -69,17 +69,17 @@ The variable 'dec_o' encodes whether the other person in the date decided they w
 
 We defined a new table 'const_attribs' which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness from your non-subjective attributes.
 
-However, we could not predict anything with this lm (R^2 = 0.14). TODO show this work.
+However, we could not predict anything with this lm (R^2 = 0.14).
 
 ```{r}
 #  rate that people decide they wanted to date you after the speed date
 # aggregate certain variables for each individual (avg's of attracitness, intelligence score ... etc. that others gave after meeting)
 
-desirableness <- aggregate(dec_o ~ iid,full_data, mean)
+desirableness <- aggregate(dec_o ~ iid, full_data, mean)
 
 
 # create subset with the fields that remain constant for an individual (regardless of the meeting)
-const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
+const_attribs <- full_data[, c("iid", "gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
 
 # this resulting table has lots of duplicated data
 # remove duplicates so there is only one obs per person
@@ -88,8 +88,8 @@ const_attribs <- const_attribs[!duplicated(const_attribs),]
 # binding back together w desirableness
 const_attribs <- merge(desirableness, const_attribs, by="iid")
 
-# merges list of dataframes into a single df
-full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))  # TODO find reduced model in git commit history
+# merges list of dataframes into a single df. removes iid as a predictor.
+full_const_fit <- lm(dec_o ~ .-iid, data = na.omit(const_attribs))  # TODO find reduced model in git commit history
 ```
 
 After we reduced the insignificant predictors in this model, it had an adjusted R^2 of just 0.14. 
@@ -99,7 +99,6 @@ After we reduced the insignificant predictors in this model, it had an adjusted 
 
 We augmented this linear model using the rankings from your partners: how attractive, sincere, intelligent, fun, and amibiotous your partners percieved you to be durin the 4 minute speed-date. In particular, for each individual we took the mean rating by their partners.
 
-TODO: repeat with likability as response var
 ```{r}
 #additional explanitory variables. note that after this point, attr_o, sinc_o, etc are
 # now aggregated means
@@ -121,17 +120,14 @@ We removed a few columns that had pesky numerical values. We will come back and 
 augmented_attribs <- augmented_attribs[, -which(names(augmented_attribs) %in% c("tuition", "mn_sat", "income")) ]
 # fit a full model
 # NOTE: we removed  NAs, remember to add these rows back later if we reduce the model
-# TODO: this is no longer a strictly constants-only model!
-full_augmented_fit <- lm(dec_o ~ ., data = na.omit(augmented_attribs))
+full_augmented_fit <- lm(dec_o ~ .-iid, data = na.omit(augmented_attribs))
 summary(full_augmented_fit)
 ```
 ```{r}
 plot(full_augmented_fit)
 ```
 
-The full model has an adj-R^2 of 0.69 on 77 predictor variables. In order to reduce our model, we ran a stepwise AIC.
-
-TODO: double check that we aren't violating any of the assumptions of stepAIC by looking at diagnostic plots first.
+The full model has an adj-R^2 of 0.69 on 76 predictor variables. In order to reduce our model, we ran a stepwise AIC.
 
 ```{r}
 library(MASS)
@@ -139,22 +135,22 @@ step <- stepAIC(full_augmented_fit, direction="both")
 step$anova # display results
 ```
 
-Reducing our model based on our stepAIC:
+Reducing our desirableness model based on our stepAIC:
 ```{r}
 # the stepAIC returned this model as these as our optimal predictors
+# attr_o + sinc_o + intel_o + like_o + gender + career_c + tvsports + gaming + yoga
 # dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
 # dec_o, attr_o, fun_o here is the mean of dec_o, attr_o, fun_o reported by partners
-reduced_augmented_fit <- lm(dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + 
-    tvsports + museums + yoga, data = na.omit(augmented_attribs))
+reduced_augmented_fit <- lm(dec_o ~ attr_o + sinc_o + intel_o + like_o + gender + career_c + tvsports + gaming + yoga, data = na.omit(augmented_attribs))
 
 summary(reduced_augmented_fit)
 ```
-Our model stayed with approximately the same adjusted R^2 (0.668), but now we have only 39 predictors. We noticed that career_c and field_c did not improve our R^2 by much, so we ran an F-test
+Our model stayed with approximately the same adjusted R^2 (0.70), but now we have only 24 predictors. We noticed that career_c and field_cd did not improve our R^2 by much, so we ran an F-test
 ```{r}
 anova(reduced_augmented_fit, lm(dec_o ~ attr_o + fun_o + gender + age + 
     tvsports + museums + yoga, data = na.omit(augmented_attribs)) )
 ```
-The F test shows it the model benefits from career_c and field_c, so we will keep them it in model.
+The F test shows it the model benefits from career_c and field_cd, so we will keep them it in model.
 
 # Checking for associations between variables
 ```{r}
@@ -179,12 +175,45 @@ Based on the model identified above, we want to help you get a date.
 What attributes predict fun or attractiveness?
 Are we any good at knowing how fun/attractive we are?
 
+# Predicting likeability
+I deliberately removed attractiveness to see what new insights we can find (attractiveness positively correlates with everything). I also removed the desirability metric, which was also strongly linearly correlated with likeability.
+```{r}
+like_lm_full <- lm(like_o ~ .-iid -dec_o -attr_o, data = na.omit(augmented_attribs))
+summary(like_lm_full)
+```
+```{r}
+step_like <- stepAIC(like_lm_full, direction="both")
+```
+
+```{r}
+step_like$anova # display results
+```
+
+Reducing our likeability prediction model based on our stepAIC:
+```{r}
+## like_o ~ sinc_o + intel_o + fun_o + amb_o + gender + age + sports + 
+##     gaming + reading + tv + theater + movies
+like_lm_reduced <- lm(like_o ~ sinc_o + intel_o + fun_o + amb_o + gender + age + sports + gaming + reading + tv + theater + movies, data = na.omit(augmented_attribs))
+
+summary(like_lm_reduced)
+```
+This likeability model has an adj-R^2 of 0.7693 with just 12 predictors.
+
+```{r}
+pairs(augmented_attribs[,c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "age", "reading", "theater", "movies", "gender", "sports",  "gaming", "tv")])
+# removed gender, since it is a factor
+# removed "theater", "movies", "sports",  "gaming", "tv" to declutter
+library("corrplot")
+corrplot(na.omit(augmented_attribs[,c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "age", "reading")]), method = "color")
+```
+
+
 # So what makes us fun? 
 
 There is strong colinearity among all of the perceived attributes (the more fun you are the more attrictive you are). We will exclude the predictors for now. It is possible that the more attractive you are, the more fun/sincere you are perceived or vice versa.
 
 ```{r}
-fun_augmented_fit <- lm(fun_o ~ . -attr_o -sinc_o -intel_o -dec_o -amb_o, data = na.omit(augmented_attribs))
+fun_augmented_fit <- lm(fun_o ~ .-iid -attr_o -sinc_o -intel_o -dec_o -amb_o, data = na.omit(augmented_attribs))
 summary(fun_augmented_fit)
 ```
 
@@ -272,14 +301,14 @@ Alternatively, are others able to pick up on our less obvious traits, like since
 plot self ratings vs. avg of trait
 ```{r}
 #  rate that people decide they like you after the speed date
-desirableness <- aggregate(dec_o ~ iid,full_data, mean)
+desirableness <- aggregate(dec_o ~ iid, full_data, mean)
 
 #additional explanitory variables
-attractive <- aggregate(attr_o ~ iid,full_data, mean)
-sincere <- aggregate(sinc_o ~ iid,full_data, mean)
-intelligent <- aggregate( intel_o ~ iid,full_data, mean)
-fun <- aggregate( fun_o ~ iid,full_data, mean)
-ambitious <- aggregate( amb_o ~ iid,full_data, mean)
+attractive <- aggregate(attr_o ~ iid, full_data, mean)
+sincere <- aggregate(sinc_o ~ iid, full_data, mean)
+intelligent <- aggregate( intel_o ~ iid, full_data, mean)
+fun <- aggregate( fun_o ~ iid, full_data, mean)
+ambitious <- aggregate( amb_o ~ iid, full_data, mean)
 
 personality_attribs <- full_data[, c("iid", "attr3_1", "sinc3_1", "fun3_1", "intel3_1", "amb3_1")]
 
@@ -289,7 +318,7 @@ personality_attribs <- personality_attribs[!duplicated(personality_attribs),]
 personality_attribs <- merge(desirableness, personality_attribs,by="iid")
 
 # we end up with three columns of dec_o here
-personality_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent,fun,ambitious, personality_attribs, desirableness  ))
+personality_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent, fun, ambitious, personality_attribs, desirableness  ))
 
 
 attr_lm <- lm(personality_attribs$attr_o ~ personality_attribs$attr3_1)
