@@ -206,19 +206,10 @@ The residual plot appears to indicate some heteroskedasticity. Let's check it ou
 
 ```{r}
 library(lmtest)
-bptest(dec_o ~ attr_o + fun_o + gender + age + tvsports + museums + yoga, data = na.omit(augmented_attribs))
+bptest(dec_o ~ attr_o + fun_o + gender + career_c + tvsports + yoga + attr_o:fun_o, data = na.omit(augmented_attribs))
 ```
 
-The p value is 0.04484 so there might be some issues with nonconstant error variance. Let's do a transformation with BoxCox.
-
-```{r}
-library(MASS)
-# had issues with boxcox when y values are zero.
-nonzero.augmented_attribs = augmented_attribs[augmented_attribs$dec_o != 0,]
-bc <- boxcox(dec_o ~ attr_o + fun_o + gender + age + 
-    tvsports + museums + yoga, data = na.omit(nonzero.augmented_attribs))
-lambda <- 
-```
+The p-value of the BP test is above 0.05 so we are kosher. 
 
 
 # How can we get dates?
