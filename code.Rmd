@@ -154,14 +154,52 @@ The p-value of the F test indicates the model with career significantly reduces 
 ```{r}
 pairs(augmented_attribs[,c("dec_o", "attr_o", "fun_o", "gender","age", "career_c", "tvsports","yoga")]) 
 
-# it appears that fun_o and attractiveness_o have a linear relationship with our response AND (maybe) each other
+```
 
+We saw some multicollinearity with attr_o and fun_o so we decided to include an interaction term in our model and compared it inside ANOVA. 
+
+```{r}
+
+anova(reduced_augmented_fit, lm(dec_o ~ attr_o + fun_o + career_c + gender + age + tvsports + yoga + attr_o*fun_o, data = na.omit(augmented_attribs)) )
+
+# it appears that fun_o and attractiveness_o have a linear relationship with our response AND (maybe) each other
+```
+
+Here, we find that the model with the interaction term reduces the sums of squares better than the reduced model without it. 
+
+
+In the following chunk, we rerun the Step AIC and it added the concerts and music variable. We then did another ANOVA model comparison and found that adding those variables reduced the sums of squares better than without it. We saw from the summary that age was not significant, so we did another ANOVA comparison without age, and found that this new reduced model reduced the sums of squares better than our full model. 
+
+
+```{r}
+
+reduced_augmented_fit<-lm(dec_o ~ attr_o + fun_o + career_c + gender + age + tvsports + yoga + attr_o*fun_o, data = na.omit(augmented_attribs))
+
+summary(reduced_augmented_fit)
+summary(lm(dec_o ~ attr_o + fun_o + gender + age + career_c + tvsports + 
+    concerts + music + yoga + attr_o:fun_o, data = na.omit(augmented_attribs)))
 par(mfrow = c(2,2))
 plot(reduced_augmented_fit)
+
+
 # QQ plot indicates normally distributed errors. The scale-location plot show that there  and possibly-maybe some heteroskedasticity in our variance.
 
 
 #next step is to maybe introduce interaction terms?
+full_augmented_fit <- lm(dec_o ~ . + attr_o*fun_o -iid, data = na.omit(augmented_attribs))
+step <- stepAIC(full_augmented_fit, direction="both")
+step$anova # display results
+
+anova(lm(dec_o ~ attr_o + fun_o + gender + age + career_c + tvsports + 
+    concerts + music + yoga + attr_o:fun_o, data = na.omit(augmented_attribs)), reduced_augmented_fit)
+
+anova(lm(dec_o ~ attr_o + fun_o + gender + age + career_c + tvsports + yoga + attr_o:fun_o, data = na.omit(augmented_attribs)), lm(dec_o ~ attr_o + fun_o + gender + career_c + tvsports + yoga + attr_o:fun_o, data = na.omit(augmented_attribs)))
+
+summary(lm(dec_o ~ attr_o + fun_o + gender + career_c + tvsports + yoga + attr_o:fun_o, data = na.omit(augmented_attribs)))
+
+final_reduced<-lm(dec_o ~ attr_o + fun_o + gender + career_c + tvsports + yoga + attr_o:fun_o, data = na.omit(augmented_attribs))
+
+
 ```
 
 The residual plot appears to indicate some heteroskedasticity. Let's check it out.
