@@ -19,20 +19,21 @@ library(data.table)
 
 Speed Dating dataset: https://www.kaggle.com/annavictoria/speed-dating-experiment
 
-Each row of the data represents one date. The primary key is one of the participants in the date, so for each date there are two rows in the dataset.
+Each row of the data represents one date between two people. The primary key is one of the participants in the date, so for each date there are two rows in the dataset.
 
-We imported the data, and then turned the appropriate columns into factors. Missing data were just blank strings, which we encoded as NAs.
+We imported the data, and then turned the appropriate columns into factors. The missing data came as blank strings, which we encoded as NAs.
 
-For now, we are filtering out rows which do not have complete data (some participants did not include their hometown or undergraduate school, which were used as proxies to quantify wealth and education level). We are probably going to add these partially-full rows back into our analysis as we drop features from our model.
+For now, we are filtering out rows which do not have complete data (some participants did not include their hometown or undergraduate school, which were used as proxies to quantify wealth and education level). We are probably going to add these partially-full rows back into our analysis as we drop features from our model. TODO check if true
 
 ```{r}
 # This works if you do the following:
 # stick the csv file in the same directory as this Rmd
 # in RStudio, go to Session -> Set Work Directory -> To Source File location
+# this expects only one csv to be in the directory
 project.dir <- getwd()
 setwd(project.dir)
-file_names <- list.files(file.path(project.dir), pattern="*.csv", full.names=TRUE) 
-full_data <- fread(file.path(file_names))
+csv_file <- list.files(file.path(project.dir), pattern="*.csv", full.names=TRUE) 
+full_data <- fread(file.path(csv_file))
 
 
 full_data[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")] <- lapply(full_data[,c("race_o","field_cd", "race", "goal", "date", "go_out", "career_c", "met", "dec", "length", "numdat_2", "gender", "condtn")], factor)
@@ -55,7 +56,7 @@ Save/Load current state for easy continuation
 ```{r}
 #setwd()
 #saveRDS(full_data, file="full_speed_dating.rds")
-full_data <- readRDS("full_speed_dating.rds")
+#full_data <- readRDS("full_speed_dating.rds")
 ```
 
 
@@ -66,10 +67,10 @@ full_data <- readRDS("full_speed_dating.rds")
 The variable 'dec_o' encodes whether the other person in the date decided they would like a second date with you (1 for yes, 0 for no). We decided to use this as the response variable instead of 'match' because 'match' means that both people mutually liked each other. In particular, for each participant, we took the mean of 'dec_o' as a proxy for desireable-ness.
 
 
+We defined a new table 'const_attribs' which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness from your non-subjective attributes.
 
-We defined a new table 'const_attribs' (TODO: give better name) which represents the constant attributes of the participants. For example, from one date to another your age, field of study, and gender do not change. We wanted to see whether we can predict desirable-ness.
+However, we could not predict anything with this lm (R^2 = 0.14). TODO show this work.
 
-TODO: repeat with likability as response var
 ```{r}
 #  rate that people decide they wanted to date you after the speed date
 # aggregate certain variables for each individual (avg's of attracitness, intelligence score ... etc. that others gave after meeting)
@@ -79,79 +80,97 @@ desirableness <- aggregate(dec_o ~ iid,full_data, mean)
 # avg likeability score given to you by
 likeability <- aggregate(like_o ~ iid,full_data, mean)
 
-#additional explanitory variables
-attractive <- aggregate(attr_o ~ iid,full_data, mean)
-sincere <- aggregate(sinc_o ~ iid,full_data, mean)
-intelligent <- aggregate( intel_o ~ iid,full_data, mean)
-fun <- aggregate( fun_o ~ iid,full_data, mean)
-ambitious <- aggregate( amb_o ~ iid,full_data, mean) #this was assigned incorrectly.. do any of the analyses change in model prediction section?
 
 # create subset with the fields that remain constant for an individual (regardless of the meeting)
 const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
 
+# this resulting table has lots of duplicated data
 # remove duplicates so there is only one obs per person
 const_attribs <- const_attribs[!duplicated(const_attribs),]
 
-# binding back together 
+# binding back together w desirableness
 const_attribs <- merge(desirableness, const_attribs,by="iid")
 
 # merges list of dataframes into a single df
-const_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent,fun,ambitious, const_attribs, desirableness  ))
+full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))  # TODO find reduced model in git commit history
+```
+
+After we reduced the insignificant predictors in this model, it had an adjusted R^2 of just 0.14. 
+
+
+# Predicting rate of people liking you with constant fields and partner-rankings
+
+We augmented this linear model using the rankings from your partners: how attractive, sincere, intelligent, fun, and amibiotous your partners percieved you to be durin the 4 minute speed-date. In particular, for each individual we took the mean rating by their partners.
+
+TODO: repeat with likability as response var
+```{r}
+#additional explanitory variables
+attractive <- aggregate(attr_o ~ iid, full_data, mean)
+sincere <- aggregate(sinc_o ~ iid, full_data, mean)
+intelligent <- aggregate(intel_o ~ iid, full_data, mean)
+fun <- aggregate(fun_o ~ iid, full_data, mean)
+ambitious <- aggregate( amb_o ~ iid, full_data, mean) # this was assigned incorrectly.. do any of the analyses change in model prediction section?
+
+augmented_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent, fun, ambitious, const_attribs, desirableness))
 ```
 
 We removed a few columns that had pesky numerical values. We will come back and probably add these back in after fixing that.
 ```{r}
 # remove fields that consist of mostly NA's
 # these are tuition, SAT, and predicted income
-const_attribs <- const_attribs[, -which(names(const_attribs) %in% c("tuition", "mn_sat", "income")) ]
+augmented_attribs <- augmented_attribs[, -which(names(augmented_attribs) %in% c("tuition", "mn_sat", "income")) ]
 # fit a full model
-full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))
-summary(full_const_fit)
+# NOTE: we removed  NAs, remember to add these rows back later if we reduce the model
+# TODO: this is no longer a strictly constants-only model!
+full_augmented_fit <- lm(dec_o ~ ., data = na.omit(augmented_attribs))
+summary(full_augmented_fit)
 ```
 ```{r}
-plot(full_const_fit)
+plot(full_augmented_fit)
 ```
 
+The full model has an adj-R^2 of 0.65 on 76 predictor variables. In order to reduce our model, we ran a stepwise AIC.
+
+TODO: double check that we aren't violating any of the assumptions of stepAIC by looking at diagnostic plots first.
+
 ```{r}
-# since we have a bunch of predictor variables I'm going to run a stepwaise AIC to see if we can find a reduced model
 library(MASS)
-step <- stepAIC(full_const_fit, direction="both")
+step <- stepAIC(full_augmented_fit, direction="both")
 step$anova # display results
 ```
 
-Reducing our model based on our stepAIC
+Reducing our model based on our stepAIC:
 ```{r}
-#the stepAIC returned this model as these as our optimal predictors
+# the stepAIC returned this model as these as our optimal predictors
 # dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
 # dec_o, attr_o, fun_o here is the mean of dec_o, attr_o, fun_o reported by partners
-reduced_const_fit <- lm(dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + 
-    tvsports + museums + yoga, data = na.omit(const_attribs))
+reduced_augmented_fit <- lm(dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + 
+    tvsports + museums + yoga, data = na.omit(augmented_attribs))
 
-summary(reduced_const_fit)
+summary(reduced_augmented_fit)
 ```
-
+Our model stayed with approximately the same adjusted R^2 (0.668), but now we have only 39 predictors. We noticed that career_c and field_c did not improve our R^2 by much, so we ran an F-test
 ```{r}
-# look at maybe removing career_c and field_c since it didn't improve our R^2 by much. F test shows it helps, so we keep it in model
-anova(reduced_const_fit,lm(dec_o ~ attr_o + fun_o + gender + age + 
-    tvsports + museums + yoga, data = na.omit(const_attribs)) )
+anova(reduced_augmented_fit, lm(dec_o ~ attr_o + fun_o + gender + age + 
+    tvsports + museums + yoga, data = na.omit(augmented_attribs)) )
 ```
+The F test shows it the model benefits from career_c and field_c, so we will keep them it in model.
 
-
+# Checking for associations between variables
 ```{r}
-# check if there are any apparent associations between variables in our model
 # dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
-pairs(const_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age", "field_cd", "career_c", "tvsports","museums","yoga")]) 
+pairs(augmented_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age", "field_cd", "career_c", "tvsports","museums","yoga")]) 
 # it appears that fun_o and attractiveness_o have a linear relationship with our response AND (maybe) each other
 
 par(mfrow = c(2,2))
-plot(reduced_const_fit)
-# QQ plot indicates normally distributed errors, and possibly-maybe some heteroskedasticity in our variance.
+plot(reduced_augmented_fit)
+# QQ plot indicates normally distributed errors. The scale-location plot show that there  and possibly-maybe some heteroskedasticity in our variance.
 
 
 #next step is to maybe introduce interaction terms?
 ```
 
-The Q-Q plot tells us that we have normally distributed errors, and the Residual vs Fitted plot tells us that we don't have heterskedasticity in our variance. 
+The residuals plot shows that the variance is non-heteroskedastic. The Q-Q plot tells us that we have normally distributed errors. 
 
 # How can we get dates?
 (credit: Kev)
@@ -178,9 +197,9 @@ step$anova # display results
 Reducing our model based on our anova results
 ```{r}
 # fun_o ~ gender + go_out + career_c + sports + exercise + dining + gaming + clubbing + tv + concerts + music
-fun_reduced_const_fit <- lm(fun_o ~ gender + go_out + career_c + sports + exercise + dining + 
+fun_reduced_augmented_fit <- lm(fun_o ~ gender + go_out + career_c + sports + exercise + dining + 
     gaming + clubbing + tv + concerts + music, data = na.omit(const_attribs))
-summary(fun_reduced_const_fit)
+summary(fun_reduced_augmented_fit)
 ```
 
 
@@ -191,7 +210,7 @@ pairs(const_attribs[,c("fun_o", "gender", "go_out", "career_c", "sports", "exerc
 
 #that didn't do shite
 par(mfrow = c(2,2))
-plot(fun_reduced_const_fit)
+plot(fun_reduced_augmented_fit)
 
 ```
 
@@ -209,8 +228,8 @@ step$anova # display results
 Reducing our model based on our anova results
 ```{r}
 # Forward AIC = fun_o ~ go_out + exercise + clubbing + gender + field_cd + tv
-fun_reduced_const_fit_2 <- lm(fun_o ~ go_out + exercise + clubbing + gender + field_cd + tv, data = na.omit(smaller_const_attribs))
-summary(fun_reduced_const_fit_2)
+fun_reduced_augmented_fit_2 <- lm(fun_o ~ go_out + exercise + clubbing + gender + field_cd + tv, data = na.omit(smaller_const_attribs))
+summary(fun_reduced_augmented_fit_2)
 ```
 
 ```{r}
@@ -218,7 +237,7 @@ pairs(const_attribs[,c("fun_o", "gender", "go_out", "exercise", "clubbing", "tv"
 
 #that didn't do shite
 par(mfrow = c(2,2))
-plot(fun_reduced_const_fit_2)
+plot(fun_reduced_augmented_fit_2)
 ```
 
 Although these appear statistically significant, the Adj. R. Square for this model is very low and there is not much linear relationship from the predicted values
@@ -329,6 +348,7 @@ ggplot(na.omit(personality_attribs), aes(x=amb3_1, y=sinc_o, fill=amb3_1)) +
 ```
 
 ```{r}
+library(tidyverse)
 sincerity <- full_data[,c("sinc_o", "sinc3_1")]
 sincerity <- sincerity %>% count(sinc3_1, sinc_o)
 # round very few decimal ratings to integers
