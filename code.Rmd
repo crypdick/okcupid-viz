@@ -110,7 +110,7 @@ ambitious <- aggregate( amb_o ~ iid, full_data, mean) # this was assigned incorr
 attractive <- aggregate(attr_o ~ iid, full_data, mean)
 likeability <- aggregate(like_o ~ iid,full_data, mean)
 
-augmented_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent, fun, ambitious, likeability, const_attribs, desirableness))
+augmented_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent, fun, ambitious, const_attribs, desirableness))
 ```
 
 We removed a few columns that had pesky numerical values. We will come back and probably add these back in after fixing that.
@@ -138,25 +138,22 @@ step$anova # display results
 Reducing our desirableness model based on our stepAIC:
 ```{r}
 # the stepAIC returned this model as these as our optimal predictors
-# attr_o + sinc_o + intel_o + like_o + gender + career_c + tvsports + gaming + yoga
-# dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
+# dec_o ~ attr_o + fun_o + gender + age + career_c + tvsports + yoga
 # dec_o, attr_o, fun_o here is the mean of dec_o, attr_o, fun_o reported by partners
-reduced_augmented_fit <- lm(dec_o ~ attr_o + sinc_o + intel_o + like_o + gender + career_c + tvsports + gaming + yoga, data = na.omit(augmented_attribs))
+reduced_augmented_fit <- lm(dec_o ~ attr_o + fun_o + gender + age + career_c + tvsports + yoga, data = na.omit(augmented_attribs))
 
 summary(reduced_augmented_fit)
 ```
-Our model stayed with approximately the same adjusted R^2 (0.70), but now we have only 24 predictors. We noticed that career_c and field_cd did not improve our R^2 by much, so we ran an F-test
+Our model stayed with approximately the same adjusted R^2 (0.657), but now we have only 24 predictors. We noticed that career_c did not improve our R^2 by much, so we ran an F-test
 ```{r}
-anova(reduced_augmented_fit, lm(dec_o ~ attr_o + fun_o + gender + age + 
-    tvsports + museums + yoga, data = na.omit(augmented_attribs)) )
+anova(reduced_augmented_fit, lm(dec_o ~ attr_o + fun_o + gender + age + tvsports + yoga, data = na.omit(augmented_attribs)) )
 ```
-The F test shows it the model benefits from career_c and field_cd, so we will keep them it in model.
+The p-value of the F test indicates the model with career significantly reduces the sum of squares error, so we will keep them it in model.
 
 # Checking for associations between variables
 ```{r}
-# dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
-pairs(augmented_attribs[,c("dec_o", "sinc_o", "attr_o", "gender","age", "like_o", "career_c", "tvsports", "gaming","yoga")]) 
-#pairs(augmented_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age", "field_cd", "career_c", "tvsports","museums","yoga")]) 
+pairs(augmented_attribs[,c("dec_o", "attr_o", "fun_o", "gender","age", "career_c", "tvsports","yoga")]) 
+
 # it appears that fun_o and attractiveness_o have a linear relationship with our response AND (maybe) each other
 
 par(mfrow = c(2,2))
@@ -167,7 +164,24 @@ plot(reduced_augmented_fit)
 #next step is to maybe introduce interaction terms?
 ```
 
-The residuals plot shows that the variance is non-heteroskedastic. The Q-Q plot tells us that we have normally distributed errors. 
+The residual plot appears to indicate some heteroskedasticity. Let's check it out.
+
+```{r}
+library(lmtest)
+bptest(dec_o ~ attr_o + fun_o + gender + age + tvsports + museums + yoga, data = na.omit(augmented_attribs))
+```
+
+The p value is 0.04484 so there might be some issues with nonconstant error variance. Let's do a transformation with BoxCox.
+
+```{r}
+library(MASS)
+# had issues with boxcox when y values are zero.
+nonzero.augmented_attribs = augmented_attribs[augmented_attribs$dec_o != 0,]
+bc <- boxcox(dec_o ~ attr_o + fun_o + gender + age + 
+    tvsports + museums + yoga, data = na.omit(nonzero.augmented_attribs))
+lambda <- 
+```
+
 
 # How can we get dates?
 (credit: Kev)
@@ -232,7 +246,7 @@ fun_reduced_augmented_fit <- lm(fun_o ~ gender + go_out + career_c + sports + ex
     gaming + clubbing + tv + concerts + music, data = na.omit(augmented_attribs))
 summary(fun_reduced_augmented_fit)
 ```
-The R^2 is just 0.1557.
+The R^2 is only 0.1557.
 
 ```{r}
 # fun_o ~ gender + go_out + career_c + sports + exercise + dining + gaming + clubbing + tv + concerts + music
