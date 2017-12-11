@@ -306,6 +306,7 @@ p <- ggplot(na.omit(personality_attribs), aes(x=attr3_1, y=attr_o, fill=attr3_1)
 # plot with median and quartile
 p  + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Attractiveness", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
 # is it possible to add the lm to this plot?
+
 ```
 
 
