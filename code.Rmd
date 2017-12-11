@@ -219,43 +219,10 @@ What attributes predict fun or attractiveness?
 Are we any good at knowing how fun/attractive we are?
 
 # Predicting likeability
-I deliberately removed attractiveness to see what new insights we can find (attractiveness positively correlates with everything). I also removed the desirability metric, which was also strongly linearly correlated with likeability.
-```{r}
-like_lm_full <- lm(like_o ~ .-iid -dec_o -attr_o, data = na.omit(augmented_attribs))
-summary(like_lm_full)
-```
-```{r}
-step_like <- stepAIC(like_lm_full, direction="both")
-```
 
-```{r}
-step_like$anova # display results
-```
-
-Reducing our likeability prediction model based on our stepAIC:
-```{r}
-## like_o ~ sinc_o + intel_o + fun_o + amb_o + gender + age + sports + 
-##     gaming + reading + tv + theater + movies
-like_lm_reduced <- lm(like_o ~ sinc_o + intel_o + fun_o + amb_o + gender + age + sports + gaming + reading + tv + theater + movies, data = na.omit(augmented_attribs))
-
-summary(like_lm_reduced)
-```
-This likeability model has an adj-R^2 of 0.7693 with just 12 predictors.
-
-```{r}
-pairs(augmented_attribs[,c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "age", "reading", "theater", "movies", "gender", "sports",  "gaming", "tv")])
-# removed gender, since it is a factor
-# removed "theater", "movies", "sports",  "gaming", "tv" to declutter
-library("corrplot")
-reduced_likeability_df <- data.frame(na.omit(augmented_attribs[, c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "age")]))
-#corrplot(reduced_likeability_df, method = "color")
-cor(reduced_likeability_df)
-```
-
+This question is "can we predict how fun someone is perceived based on self-reported attributes" not other's subjective opinions (i.e. can we predict if you will be perceived as fun based on your favorite activites, not on if someone else thinks you are attractive). 
 
 # So what makes us fun? 
-
-There is strong colinearity among all of the perceived attributes (the more fun you are the more attrictive you are). We will exclude the predictors for now. It is possible that the more attractive you are, the more fun/sincere you are perceived or vice versa.
 
 ```{r}
 fun_augmented_fit <- lm(fun_o ~ .-iid -attr_o -sinc_o -intel_o -dec_o -amb_o, data = na.omit(augmented_attribs))
@@ -277,17 +244,6 @@ summary(fun_reduced_augmented_fit)
 ```
 The R^2 is only 0.1557.
 
-```{r}
-# fun_o ~ gender + go_out + career_c + sports + exercise + dining + gaming + clubbing + tv + concerts + music
-pairs(augmented_attribs[,c("fun_o", "gender", "go_out", "career_c", "sports", "exercise", "dining", 
-    "gaming", "clubbing", "tv", "concerts", "music")])
-
-#that didn't do shite
-par(mfrow = c(2,2))
-plot(fun_reduced_augmented_fit)
-
-```
-
 Does the model come out any better if we go forwards?
 ```{r}
 # I don't want the forward approach to grab the perceived data
@@ -306,14 +262,9 @@ fun_reduced_augmented_fit_2 <- lm(fun_o ~ go_out + exercise + clubbing + gender 
 summary(fun_reduced_augmented_fit_2)
 ```
 The adjusted R^2 is quite low, at 0.1403 with 27 variables.
-```{r}
-pairs(augmented_attribs[,c("fun_o", "gender", "go_out", "exercise", "clubbing", "tv", "field_cd")])
-
-par(mfrow = c(2,2))
-plot(fun_reduced_augmented_fit_2)
-```
 
 Although these appear statistically significant, the Adj. R. Square for this model is very low and there is not much linear relationship from the predicted values
+
 ```{r}
 plot(augmented_attribs$fun_o ~ augmented_attribs$exercise)
 plot(augmented_attribs$fun_o ~ augmented_attribs$tv)
@@ -422,7 +373,8 @@ ggplot(na.omit(personality_attribs), aes(x=amb3_1, y=sinc_o, fill=amb3_1)) +
 ```
 
 ```{r}
-library(tidyverse)
+#library(tidyverse)
+library(dply)
 sincerity <- full_data[,c("sinc_o", "sinc3_1")]
 sincerity <- sincerity %>% count(sinc3_1, sinc_o)
 # round very few decimal ratings to integers
