@@ -204,7 +204,9 @@ pairs(augmented_attribs[,c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "ag
 # removed gender, since it is a factor
 # removed "theater", "movies", "sports",  "gaming", "tv" to declutter
 library("corrplot")
-corrplot(na.omit(augmented_attribs[,c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "age", "reading")]), method = "color")
+reduced_likeability_df <- data.frame(na.omit(augmented_attribs[, c("like_o", "sinc_o", "intel_o", "fun_o", "amb_o",  "age")]))
+#corrplot(reduced_likeability_df, method = "color")
+cor(reduced_likeability_df)
 ```
 
 
