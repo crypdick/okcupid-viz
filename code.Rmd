@@ -123,11 +123,7 @@ augmented_attribs <- augmented_attribs[, -which(names(augmented_attribs) %in% c(
 full_augmented_fit <- lm(dec_o ~ .-iid, data = na.omit(augmented_attribs))
 summary(full_augmented_fit)
 ```
-```{r}
-plot(full_augmented_fit)
-```
-
-The full model has an adj-R^2 of 0.69 on 76 predictor variables. In order to reduce our model, we ran a stepwise AIC.
+The full model has an adj-R^2 of 0.65 on 75 predictor variables. In order to reduce our model, we ran a stepwise AIC.
 
 ```{r}
 library(MASS)
@@ -266,27 +262,15 @@ The adjusted R^2 is quite low, at 0.1403 with 27 variables.
 Although these appear statistically significant, the Adj. R. Square for this model is very low and there is not much linear relationship from the predicted values
 
 ```{r}
-plot(augmented_attribs$fun_o ~ augmented_attribs$exercise)
-plot(augmented_attribs$fun_o ~ augmented_attribs$tv)
-plot(augmented_attribs$fun_o ~ augmented_attribs$gender)
 plot(augmented_attribs$fun_o ~ augmented_attribs$go_out)
-plot(augmented_attribs$fun_o ~ augmented_attribs$clubbing)
-plot(augmented_attribs$fun_o ~ augmented_attribs$field_cd)
+plot(augmented_attribs$fun_o ~ as.factor(augmented_attribs$clubbing))
 plot(augmented_attribs$fun_o ~ augmented_attribs$career_c)
 ```
 
 Where should we go from here with this idea?
-
-- perceived fun for males is larger range than for females?
 - real estate agents are more fun?
-- TO-DO: show plot for correlation between fun and attractiveness
 - visually, it is possible that the less you go out (7) the less fun you are
 - it could be possible that the more important clubbing is to you, the more fun you are
-- t-tests to show which careers, fields of study are more attractive/fun/etc?
-- TO-DO: we need to try splitting all of our analyses by genders (what men what/think is different than women... the data is already very binary so this is based on this dataset)
-- TO-DO: make plots prettier
-- TO-DO: do similar thing with attractiveness
-- TO-DO: hypothesis testing
 
 # How accurate is our self-perception?
 
@@ -374,7 +358,7 @@ ggplot(na.omit(personality_attribs), aes(x=amb3_1, y=sinc_o, fill=amb3_1)) +
 
 ```{r}
 #library(tidyverse)
-library(dply)
+library(dplyr)
 sincerity <- full_data[,c("sinc_o", "sinc3_1")]
 sincerity <- sincerity %>% count(sinc3_1, sinc_o)
 # round very few decimal ratings to integers
