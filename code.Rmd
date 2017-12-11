@@ -77,9 +77,6 @@ However, we could not predict anything with this lm (R^2 = 0.14). TODO show this
 
 desirableness <- aggregate(dec_o ~ iid,full_data, mean)
 
-# avg likeability score given to you by
-likeability <- aggregate(like_o ~ iid,full_data, mean)
-
 
 # create subset with the fields that remain constant for an individual (regardless of the meeting)
 const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuition", "imprace", "income", "goal", "date", "go_out", "career_c", "match_es","sports", "tvsports", "exercise", "dining", "museums", "art", "hiking", "gaming", "clubbing", "reading", "tv", "theater", "movies", "concerts", "music", "shopping", "yoga")]
@@ -89,7 +86,7 @@ const_attribs <- full_data[, c("iid","gender","age", "field_cd", "mn_sat", "tuit
 const_attribs <- const_attribs[!duplicated(const_attribs),]
 
 # binding back together w desirableness
-const_attribs <- merge(desirableness, const_attribs,by="iid")
+const_attribs <- merge(desirableness, const_attribs, by="iid")
 
 # merges list of dataframes into a single df
 full_const_fit <- lm(dec_o ~ ., data = na.omit(const_attribs))  # TODO find reduced model in git commit history
@@ -104,14 +101,17 @@ We augmented this linear model using the rankings from your partners: how attrac
 
 TODO: repeat with likability as response var
 ```{r}
-#additional explanitory variables
+#additional explanitory variables. note that after this point, attr_o, sinc_o, etc are
+# now aggregated means
 attractive <- aggregate(attr_o ~ iid, full_data, mean)
 sincere <- aggregate(sinc_o ~ iid, full_data, mean)
 intelligent <- aggregate(intel_o ~ iid, full_data, mean)
 fun <- aggregate(fun_o ~ iid, full_data, mean)
 ambitious <- aggregate( amb_o ~ iid, full_data, mean) # this was assigned incorrectly.. do any of the analyses change in model prediction section?
+attractive <- aggregate(attr_o ~ iid, full_data, mean)
+likeability <- aggregate(like_o ~ iid,full_data, mean)
 
-augmented_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent, fun, ambitious, const_attribs, desirableness))
+augmented_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attractive, sincere, intelligent, fun, ambitious, likeability, const_attribs, desirableness))
 ```
 
 We removed a few columns that had pesky numerical values. We will come back and probably add these back in after fixing that.
@@ -129,7 +129,7 @@ summary(full_augmented_fit)
 plot(full_augmented_fit)
 ```
 
-The full model has an adj-R^2 of 0.65 on 76 predictor variables. In order to reduce our model, we ran a stepwise AIC.
+The full model has an adj-R^2 of 0.69 on 77 predictor variables. In order to reduce our model, we ran a stepwise AIC.
 
 TODO: double check that we aren't violating any of the assumptions of stepAIC by looking at diagnostic plots first.
 
@@ -159,7 +159,8 @@ The F test shows it the model benefits from career_c and field_c, so we will kee
 # Checking for associations between variables
 ```{r}
 # dec_o ~ attr_o + fun_o + gender + age + field_cd + career_c + tvsports + museums + yoga
-pairs(augmented_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age", "field_cd", "career_c", "tvsports","museums","yoga")]) 
+pairs(augmented_attribs[,c("dec_o", "sinc_o", "attr_o", "gender","age", "like_o", "career_c", "tvsports", "gaming","yoga")]) 
+#pairs(augmented_attribs[,c("dec_o", "fun_o", "attr_o", "gender","age", "field_cd", "career_c", "tvsports","museums","yoga")]) 
 # it appears that fun_o and attractiveness_o have a linear relationship with our response AND (maybe) each other
 
 par(mfrow = c(2,2))
@@ -183,14 +184,13 @@ Are we any good at knowing how fun/attractive we are?
 There is strong colinearity among all of the perceived attributes (the more fun you are the more attrictive you are). We will exclude the predictors for now. It is possible that the more attractive you are, the more fun/sincere you are perceived or vice versa.
 
 ```{r}
-fun_const_fit <- lm(fun_o ~ . -attr_o -sinc_o -intel_o -dec_o -amb_o, data = na.omit(const_attribs))
-summary(fun_const_fit)
+fun_augmented_fit <- lm(fun_o ~ . -attr_o -sinc_o -intel_o -dec_o -amb_o, data = na.omit(augmented_attribs))
+summary(fun_augmented_fit)
 ```
 
 ```{r}
-# since we have a bunch of predictor variables I'm going to run a stepwaise AIC
-library(MASS)
-step <- stepAIC(fun_const_fit, direction="both")
+# reduce model with stepAIC
+step <- stepAIC(fun_augmented_fit, direction="both")
 step$anova # display results
 ```
 
@@ -198,14 +198,14 @@ Reducing our model based on our anova results
 ```{r}
 # fun_o ~ gender + go_out + career_c + sports + exercise + dining + gaming + clubbing + tv + concerts + music
 fun_reduced_augmented_fit <- lm(fun_o ~ gender + go_out + career_c + sports + exercise + dining + 
-    gaming + clubbing + tv + concerts + music, data = na.omit(const_attribs))
+    gaming + clubbing + tv + concerts + music, data = na.omit(augmented_attribs))
 summary(fun_reduced_augmented_fit)
 ```
-
+The R^2 is just 0.1557.
 
 ```{r}
 # fun_o ~ gender + go_out + career_c + sports + exercise + dining + gaming + clubbing + tv + concerts + music
-pairs(const_attribs[,c("fun_o", "gender", "go_out", "career_c", "sports", "exercise", "dining", 
+pairs(augmented_attribs[,c("fun_o", "gender", "go_out", "career_c", "sports", "exercise", "dining", 
     "gaming", "clubbing", "tv", "concerts", "music")])
 
 #that didn't do shite
@@ -217,38 +217,37 @@ plot(fun_reduced_augmented_fit)
 Does the model come out any better if we go forwards?
 ```{r}
 # I don't want the forward approach to grab the perceived data
-smaller_const_attribs <- const_attribs[, -which(names(const_attribs) %in% c("attr_o", "sinc_o", "intel_o", "dec_o")) ]
+smaller_augmented_attribs <- augmented_attribs[, -which(names(augmented_attribs) %in% c("attr_o", "sinc_o", "intel_o", "dec_o")) ]
 # since we have a bunch of predictor variables I'm going to run a stepwaise AIC
-fun_const_fit_2 <- lm(fun_o ~ 1, data = na.omit(smaller_const_attribs))
-summary(fun_const_fit_2)
-step <- stepAIC(fun_const_fit_2, direction="forward", scope = list(upper = fun_const_fit, lower = fun_const_fit_2))
+fun_augmented_fit_2 <- lm(fun_o ~ 1, data = na.omit(smaller_augmented_attribs))
+summary(fun_augmented_fit_2)
+step <- stepAIC(fun_augmented_fit_2, direction="forward", scope = list(upper = fun_augmented_fit, lower = fun_augmented_fit_2))
 step$anova # display results
 ```
 
 Reducing our model based on our anova results
 ```{r}
 # Forward AIC = fun_o ~ go_out + exercise + clubbing + gender + field_cd + tv
-fun_reduced_augmented_fit_2 <- lm(fun_o ~ go_out + exercise + clubbing + gender + field_cd + tv, data = na.omit(smaller_const_attribs))
+fun_reduced_augmented_fit_2 <- lm(fun_o ~ go_out + exercise + clubbing + gender + field_cd + tv, data = na.omit(smaller_augmented_attribs))
 summary(fun_reduced_augmented_fit_2)
 ```
-
+The adjusted R^2 is quite low, at 0.1403 with 27 variables.
 ```{r}
-pairs(const_attribs[,c("fun_o", "gender", "go_out", "exercise", "clubbing", "tv", "field_cd")])
+pairs(augmented_attribs[,c("fun_o", "gender", "go_out", "exercise", "clubbing", "tv", "field_cd")])
 
-#that didn't do shite
 par(mfrow = c(2,2))
 plot(fun_reduced_augmented_fit_2)
 ```
 
 Although these appear statistically significant, the Adj. R. Square for this model is very low and there is not much linear relationship from the predicted values
 ```{r}
-plot(const_attribs$fun_o ~ const_attribs$exercise)
-plot(const_attribs$fun_o ~ const_attribs$tv)
-plot(const_attribs$fun_o ~ const_attribs$gender)
-plot(const_attribs$fun_o ~ const_attribs$go_out)
-plot(const_attribs$fun_o ~ const_attribs$clubbing)
-plot(const_attribs$fun_o ~ const_attribs$field_cd)
-plot(const_attribs$fun_o ~ const_attribs$career_c)
+plot(augmented_attribs$fun_o ~ augmented_attribs$exercise)
+plot(augmented_attribs$fun_o ~ augmented_attribs$tv)
+plot(augmented_attribs$fun_o ~ augmented_attribs$gender)
+plot(augmented_attribs$fun_o ~ augmented_attribs$go_out)
+plot(augmented_attribs$fun_o ~ augmented_attribs$clubbing)
+plot(augmented_attribs$fun_o ~ augmented_attribs$field_cd)
+plot(augmented_attribs$fun_o ~ augmented_attribs$career_c)
 ```
 
 Where should we go from here with this idea?
@@ -424,7 +423,8 @@ abline(attr_intel_lm)
 ```
 No evidence of a correlation. 
 How do I want to ask this.. if you gave yourself a 2 in some field, what was the average you gave yourself in the other fields?
-
+    I would take the mean(self-ratings) and var(self-ratings) for each person and plot them against each other --Rich
+    
 Self-reported trait ratings do not correlate with average partner ratings.
 
-General Takeaway: Turns out.. we kind of suck at predicting how attractive we are to others. What we think about ourselves is not at all correlated to what others see in us. Maybe there is no point to worrying about how strangers see us, because either they don't or we don't.
+General Takeaway: Turns out.. we kind of suck at predicting how attractive we are to others. What we think about ourselves is not at all correlated to what others see in us. Maybe there is no point to worrying about how strangers see us, because either they don't or we don't. Or maybe it's hard to guage how ambitious and sincere someone is in 4 minutes, but physical attractiveness and fun are easier to guage.
