@@ -1,6 +1,9 @@
 ---
-title: "How to Manufacture Your Personality to Gain Friends and Second Dates: A Data-Driven Field Guide for Pathetic People by Pathetic People"
-output: html_document
+title: 'How to Manufacture Your Personality to Gain Friends and Second Dates: A Data-Driven
+  Field Guide for Pathetic People by Pathetic People'
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -268,7 +271,7 @@ plot(augmented_attribs$fun_o ~ augmented_attribs$career_c)
 ```
 
 Where should we go from here with this idea?
-- real estate agents are more fun?
+- real estate agents are more fun? (but they showed up as statistically significant with a negative coefficient in the decision model above!)
 - visually, it is possible that the less you go out (7) the less fun you are
 - it could be possible that the more important clubbing is to you, the more fun you are
 
@@ -422,7 +425,8 @@ geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_
 
 
 
-General Takeaway: 
+#General Takeaway: 
+  
 Attractiveness - the linear model does not explain much of the variation in peer rating
 There may be some trend in increased perceived attractiveness with increased self-rating, however sample sizes of self-ratings <= 4 are small. 
 Most people rated themselves a 7 or 8 in attractiveness. No one's.
