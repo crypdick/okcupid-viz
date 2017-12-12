@@ -319,10 +319,10 @@ p  + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Attractivenes
 
 
 ```{r}
-sinc_lm <- lm(personality_attribs$sinc_o ~ personality_attribs$sinc3_1)
-intel_lm <- lm(personality_attribs$intel_o ~ personality_attribs$intel3_1)
-fun_lm <- lm(personality_attribs$fun_o ~ personality_attribs$fun3_1)
-amb_lm <- lm(personality_attribs$amb_o ~ personality_attribs$amb3_1)
+sinc_lm <- lm(personality_attribs$sinc_o ~ as.numeric(personality_attribs$sinc3_1))
+intel_lm <- lm(personality_attribs$intel_o ~ as.numeric(personality_attribs$intel3_1))
+fun_lm <- lm(personality_attribs$fun_o ~ as.numeric(personality_attribs$fun3_1))
+amb_lm <- lm(personality_attribs$amb_o ~ as.numeric(personality_attribs$amb3_1))
 
 summary(sinc_lm)
 summary(intel_lm)
@@ -330,13 +330,13 @@ summary(fun_lm)
 summary(amb_lm)
 
 par(mfrow = c(2,2))
-plot(personality_attribs$sinc_o ~ personality_attribs$sinc3_1)
+plot(personality_attribs$sinc_o ~ as.numeric(personality_attribs$sinc3_1))
 abline(sinc_lm)
-plot(personality_attribs$fun_o ~ personality_attribs$fun3_1)
+plot(personality_attribs$fun_o ~ as.numeric(personality_attribs$fun3_1))
 abline(fun_lm)
-plot(personality_attribs$intel_o ~ personality_attribs$intel3_1)
+plot(personality_attribs$intel_o ~ as.numeric(personality_attribs$intel3_1))
 abline(intel_lm)
-plot(personality_attribs$amb_o ~ personality_attribs$amb3_1)
+plot(personality_attribs$amb_o ~ as.numeric(personality_attribs$amb3_1))
 abline(amb_lm)
 ```
 
@@ -348,9 +348,9 @@ personality_attribs$amb3_1 <- as.factor(personality_attribs$amb3_1)
 
 ggplot(na.omit(personality_attribs), aes(x=sinc3_1, y=sinc_o, fill=sinc3_1)) + 
   geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Sincerity", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
-ggplot(na.omit(personality_attribs), aes(x=fun3_1, y=sinc_o, fill=fun3_1)) + 
+ggplot(na.omit(personality_attribs), aes(x=fun3_1, y=fun_o, fill=fun3_1)) + 
   geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Fun", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
-ggplot(na.omit(personality_attribs), aes(x=intel3_1, y=sinc_o, fill=intel3_1)) + 
+ggplot(na.omit(personality_attribs), aes(x=intel3_1, y=intel_o, fill=intel3_1)) + 
   geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Intelligence", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
 ggplot(na.omit(personality_attribs), aes(x=amb3_1, y=sinc_o, fill=amb3_1)) + 
   geom_violin(trim=FALSE) + geom_boxplot(width=0.1, fill="white") + labs(title="Perceived Ambition", x="Self-Reported", y="Partner Rating") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
