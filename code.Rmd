@@ -304,7 +304,7 @@ personality_attribs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(attract
 attr_lm <- lm(personality_attribs$attr_o ~ personality_attribs$attr3_1)
 summary(attr_lm)
 
-plot(personality_attribs$attr_o ~ personality_attribs$attr3_1)
+plot(personality_attribs$attr_o ~ personality_attribs$attr3_1, xlab="Self-Reported", ylab = "Partner Rating", main = "Perceived Attractiveness")
 abline(attr_lm)
 
 library(ggplot2)
@@ -387,7 +387,7 @@ hotness$attr3_1 <- as.factor(hotness$attr3_1)
 hotness$attr_o <- as.factor(as.integer(hotness$attr_o))
 
 ggplot(data = na.omit(hotness), aes(x=attr3_1, y=n, fill=attr_o)) +
-geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))+labs(title="Perceived Attractiveness", x="Self-Reported", y="Partner Rating")
 
 ggplot(data = na.omit(intelligence), aes(x=intel3_1, y=n, fill=intel_o)) +
 geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
@@ -405,7 +405,7 @@ geom_bar(position=position_fill(reverse = TRUE), stat="identity") + scale_fill_b
 ```{r}
 # show with frequency
 ggplot(data = na.omit(hotness), aes(x=attr3_1, y=n, fill=attr_o)) +
-geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
+geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))+labs(title="Perceived Attractiveness", x="Self-Reported", y="Partner Rating")
 
 ggplot(data = na.omit(intelligence), aes(x=intel3_1, y=n, fill=intel_o)) +
 geom_bar(position=position_stack(reverse = TRUE), stat="identity") + scale_fill_brewer(palette="Spectral", direction = -1) + guides(fill= guide_legend(reverse = TRUE))
